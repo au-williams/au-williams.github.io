@@ -39,7 +39,7 @@
 
   img,
   svg {
-    pointer-events: none;
+    // pointer-events: none;
     width: auto;
   }
 }
@@ -81,6 +81,11 @@
       height: 1.125em;
       margin: 0 0.05em;
       vertical-align: top;
+      transition: transform 100ms;
+    }
+
+    img:hover {
+      transform: rotate(20deg);
     }
   }
 }

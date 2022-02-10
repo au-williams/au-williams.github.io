@@ -3,9 +3,12 @@ import ReactGA from 'react-ga4';
 import { ReactComponent as AvatarIcon } from '../../assets/icons/avatar_icon.svg';
 import { ReactComponent as GitHubIcon } from '../../assets/icons/github_icon.svg';
 import { ReactComponent as ScrollIcon } from '../../assets/icons/scroll_icon.svg';
+import { ReactComponent as DocumentIcon } from '../../assets/icons/document_icon.svg';
+import { ReactComponent as LinkedInIcon } from '../../assets/icons/linkedin_icon.svg';
 import { CodeImage, MailboxEmoji, WaveEmoji } from '../../assets/images';
 import CodeWindow from '../CodeWindow/CodeWindow.tsx';
 import styles from './App.module.scss';
+import Tooltip from '../Tooltip/Tooltip';
 
 // google analytics
 
@@ -63,17 +66,30 @@ const App = () => {
           {avatar ? <img src={avatar} alt="avatar" draggable="false" /> : <AvatarIcon />}
           <p>
             Hey <img src={WaveEmoji} alt="waving emoji" /> — My name is{' '}
-            <a href="https://www.linkedin.com/in/auwilliams">Austin</a>. I started my career by
-            developing government programs and collaborating with major tech companies, who taught
-            me their art of delivering great software from start to finish.
+            <Tooltip Svg={LinkedInIcon} content="www.linkedin.com/in/auwilliams">
+              <a
+                href="https://www.linkedin.com/in/auwilliams"
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                Austin
+              </a>
+            </Tooltip>
+            . I started my career by developing government programs and collaborating with major
+            tech companies, who taught me their art of delivering great software from start to
+            finish.
           </p>
         </article>
         <article className={styles.article}>
           <img src={CodeImage} alt="banner" draggable="false" />
           <p>
             I love working with computers and I&apos;m always open to new opportunities. My{' '}
-            <a href="https://resume.austinwilliams.dev/">resume</a> is available online and you can
-            email me for any employment inquiries at{' '}
+            <Tooltip Svg={DocumentIcon} content="resume.austinwilliams.dev">
+              <a href="https://resume.austinwilliams.dev" rel="noopener noreferrer" target="_blank">
+                resume
+              </a>
+            </Tooltip>{' '}
+            is available online and you can email me for any employment inquiries at{' '}
             <a href="mailto:me@austinwilliams.dev">me@austinwilliams.dev</a>.{' '}
             <img src={MailboxEmoji} alt="mailbox emoji" />
           </p>

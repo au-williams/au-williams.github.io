@@ -127,6 +127,7 @@ $visibility-transition-speed: 100ms;
   right: 0; // IE11
   scrollbar-color: #18191a; // chrome
   top: 0; // IE11
+  box-shadow: rgba(0, 0, 0, 0.06) 0px 2px 4px 0px inset; // todo: em conversion
   width: 100%;
 
   &::before {
