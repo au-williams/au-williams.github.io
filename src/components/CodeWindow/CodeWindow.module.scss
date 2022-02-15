@@ -5,7 +5,6 @@ $code-window-border-radius: 0.15em;
 $code-window-sidebar-width: 2.25em;
 
 :export {
-  // imported in CodeBlock.jsx to calculate widths
   codeBlockSize: $code-block-size;
   codeLineSpace: $code-line-space;
 }
@@ -30,16 +29,6 @@ $visibility-transition-speed: 100ms;
   white-space: nowrap;
   width: 50em;
   border-radius: $code-window-border-radius;
-
-  &::before {
-    background: #333333;
-    border-left: $code-window-border-width solid #3c3c3c;
-    border-radius: $code-window-border-radius 0 0 $code-window-border-radius;
-    content: '';
-    height: 100%;
-    position: absolute;
-    width: $code-window-sidebar-width;
-  }
 }
 
 .title {
@@ -49,7 +38,6 @@ $visibility-transition-speed: 100ms;
   flex-shrink: 0;
   height: $code-window-title-bar-height;
   padding: 0 $code-window-border-width;
-  z-index: 1;
 
   div:nth-child(1) {
     $background-color: #0078d7;
@@ -120,6 +108,14 @@ $visibility-transition-speed: 100ms;
   border-width: 0 $code-window-border-width;
   height: inherit;
   position: relative;
+
+  &::before {
+    background: #333333;
+    content: '';
+    height: 100%;
+    position: absolute;
+    width: $code-window-sidebar-width;
+  }
 }
 
 .code {
@@ -200,7 +196,6 @@ $visibility-transition-speed: 100ms;
     background-color $visibility-transition-speed,
     border-color $visibility-transition-speed,
     height $visibility-transition-speed;
-  z-index: 1;
 
   &.visible {
     $background-color: #68217a;
@@ -306,7 +301,6 @@ $visibility-transition-speed: 100ms;
   text-align: center;
   transition: background-color $visibility-transition-speed;
   visibility: hidden;
-  z-index: 1;
 
   &::after {
     border-color: transparent;

@@ -1,4 +1,3 @@
-$tooltip-background-color: #161616;
 $tooltip-padding: 0.375em;
 
 .wrapper {
@@ -7,34 +6,38 @@ $tooltip-padding: 0.375em;
   &:active .tooltip {
     transform: translateY(2px);
   }
+
+  &:hover {
+    z-index: 11;
+    .tooltip { z-index: inherit; }
+  }
 }
 
 .tooltip {
-  background-color: #161616;
-  border-bottom: 0.135em solid #ce9178;
+  align-items: center;
+  background-color: #1a1a1a; // 161616
+  border-radius: .5em;
+  border: 0.135em solid #ce9178;
   bottom: 120%;
-  // border-radius: 0.25em;
-  // box-shadow: rgba(0, 0, 0, 0.07) 0px 1px 2px, rgba(0, 0, 0, 0.07) 0px 2px 4px,
-  //   rgba(0, 0, 0, 0.07) 0px 4px 8px, rgba(0, 0, 0, 0.07) 0px 8px 16px,
-  //   rgba(0, 0, 0, 0.07) 0px 16px 32px, rgba(0, 0, 0, 0.07) 0px 32px 64px;
+  box-shadow: 0 0.25em .75em #010409;
   box-sizing: border-box;
-  color: #d4d4d4;
   color: #ce9178;
   display: flex;
-  align-items: center;
-  justify-content: center;
   font-family: 'Roboto', sans-serif;
-  font-size: 85%;
+  font-size: 80%;
+  justify-content: center;
   left: 50%;
   padding: $tooltip-padding;
-  position: absolute;
-  visibility: hidden;
-  z-index: 1;
-  width: auto;
+  padding-right: $tooltip-padding + 0.15em;
   pointer-events: none;
+  position: absolute;
+  white-space: nowrap;
+  visibility: hidden;
+  width: auto;
 
   svg {
-    padding-right: 0.1875em;
+    font-size: 112.5%;
+    padding-right: $tooltip-padding - 0.15em;
   }
 
   &::after {
@@ -45,7 +48,7 @@ $tooltip-padding: 0.375em;
     left: 50%;
     margin-left: -0.3125em;
     position: absolute;
-    top: 102%;
+    top: 105%;
     visibility: inherit;
   }
 }

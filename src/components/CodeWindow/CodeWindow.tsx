@@ -155,8 +155,14 @@ const CodeWindow = () => {
   const formattedLineCount = getFormattedNumber(lineCount);
 
   const [isMouseHovering, setIsMouseHovering] = useState<boolean>(false);
-  const onMouseLeave = () => setIsMouseHovering(false);
-  const onMouseOver = () => setIsMouseHovering(true);
+
+  const onComponentMouseLeave = () => {
+    setIsMouseHovering(false);
+  }
+
+  const onComponentMouseOver = () => {
+    setIsMouseHovering(true);
+  }
 
   const [isFooterPinned, setIsFooterPinned] = useState<boolean>(false);
   const onPinClick = () => setIsFooterPinned((x) => !x);
@@ -356,9 +362,9 @@ const CodeWindow = () => {
   return (
     <div
       className={styles.wrapper}
-      onMouseOver={onMouseOver}
-      onFocus={onMouseOver}
-      onMouseLeave={onMouseLeave}
+      onMouseOver={onComponentMouseOver}
+      onFocus={onComponentMouseOver}
+      onMouseLeave={onComponentMouseLeave}
     >
       <div className={styles.title}>
         <div />

@@ -1,37 +1,54 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import ReactGA from 'react-ga4';
+import { useDispatch, useSelector } from 'react-redux';
+import { bindActionCreators } from 'redux';
+import * as actionCreators from '../../redux/modules/avatar';
 import { ReactComponent as AvatarIcon } from '../../assets/icons/avatar_icon.svg';
 import { ReactComponent as GitHubIcon } from '../../assets/icons/github_icon.svg';
 import { ReactComponent as ScrollIcon } from '../../assets/icons/scroll_icon.svg';
-import { ReactComponent as DocumentIcon } from '../../assets/icons/document_icon.svg';
-import { ReactComponent as LinkedInIcon } from '../../assets/icons/linkedin_icon.svg';
 import { CodeImage, MailboxEmoji, WaveEmoji } from '../../assets/images';
 import CodeWindow from '../CodeWindow/CodeWindow.tsx';
-import styles from './App.module.scss';
 import Tooltip from '../Tooltip/Tooltip';
+import styles from './App.module.scss';
 
-// google analytics
+// ---------------- //
+// google analytics //
+// ---------------- //
 
 const startGoogleAnalytics = () => {
   ReactGA.initialize('G-JFBLY5T1C0');
   ReactGA.send('pageview');
 };
 
-const sendGoogleAnalyticsEvent = (category, action) => ReactGA.event({ category, action });
+const sendGoogleAnalyticsEvent = (category, action) => {
+  ReactGA.event({ category, action });
+};
 
-// react events
+// ------------ //
+// react events //
+// ------------ //
 
 const onBackClick = () => {
   sendGoogleAnalyticsEvent('click', 'back_to_top_button');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-const onGitHubClick = () => sendGoogleAnalyticsEvent('click', 'github_outbound_link');
+const onGitHubClick = () => {
+  sendGoogleAnalyticsEvent('click', 'github_outbound_link');
+};
 
-// react render
+// ------------ //
+// react render //
+// ------------ //
 
 const App = () => {
-  const [avatar, setAvatar] = useState(null);
+  // redux state
+  const { setAvatar } = bindActionCreators(actionCreators, useDispatch());
+  const overlayOpacity = useSelector((state) => state.overlay.opacity);
+  const avatarSource = useSelector((state) => state.avatar.source);
+
+  // react hooks
+  const overlayRef = useRef(null);
   const sectionRef = useRef(null);
 
   const fetchGitHubAvatar = () => {
@@ -51,8 +68,13 @@ const App = () => {
     fetchGitHubAvatar();
   });
 
+  useEffect(() => {
+    overlayRef.current.style.opacity = overlayOpacity;
+  }, [overlayOpacity]);
+
   return (
     <>
+      <div className={styles.overlay} ref={overlayRef} />
       <header className={styles.wrapper}>
         <CodeWindow />
         <button type="button" onClick={onAboutClick}>
@@ -63,10 +85,10 @@ const App = () => {
       </header>
       <section className={styles.section} ref={sectionRef}>
         <article className={styles.article}>
-          {avatar ? <img src={avatar} alt="avatar" draggable="false" /> : <AvatarIcon />}
+          {avatarSource ? <img src={avatarSource} alt="avatar" /> : <AvatarIcon />}
           <p>
             Hey <img src={WaveEmoji} alt="waving emoji" /> — My name is{' '}
-            <Tooltip Svg={LinkedInIcon} content="www.linkedin.com/in/auwilliams">
+            <Tooltip content="www.linkedin.com/in/auwilliams">
               <a
                 href="https://www.linkedin.com/in/auwilliams"
                 rel="noopener noreferrer"
@@ -81,10 +103,10 @@ const App = () => {
           </p>
         </article>
         <article className={styles.article}>
-          <img src={CodeImage} alt="banner" draggable="false" />
+          <img src={CodeImage} alt="code" />
           <p>
             I love working with computers and I&apos;m always open to new opportunities. My{' '}
-            <Tooltip Svg={DocumentIcon} content="resume.austinwilliams.dev">
+            <Tooltip content="resume.austinwilliams.dev">
               <a href="https://resume.austinwilliams.dev" rel="noopener noreferrer" target="_blank">
                 resume
               </a>
