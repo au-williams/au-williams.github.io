@@ -17,13 +17,37 @@ $code-window-title-bar-button-size: 0.95em;
 $code-window-title-bar-height: 2.25em;
 $visibility-transition-speed: 100ms;
 
+.slider {
+  align-items: center;
+  display: flex;
+  font-size: 1.5em;
+  height: 5vh;
+  opacity: 0;
+  position: relative;
+  top: -5vh;
+  transition: top 200ms ease 0s, opacity 200ms;
+  z-index: -1;
+
+  &.visible {
+    opacity: 1;
+    top: 0;
+  }
+
+  svg {
+    margin-right: 0.2em;
+    height: 1em;
+    width:  1em;
+    margin-top: -0.5em;
+  }
+}
+
 .wrapper {
   background-color: #202020;
   box-shadow: rgba(0, 0, 0, 0.35) 0 0.3125em 0.9375em;
   display: flex;
   flex-direction: column;
   height: 28.125em;
-  margin: 5vh 0;
+  margin-top: 5vh;
   max-width: 100%;
   overflow: hidden;
   position: relative;

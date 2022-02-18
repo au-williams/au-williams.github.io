@@ -8,6 +8,7 @@ import { ReactComponent as PinOffIcon } from '../../assets/icons/pin_off_icon.sv
 import { ReactComponent as PinOnIcon } from '../../assets/icons/pin_on_icon.svg';
 import { ReactComponent as PlayIcon } from '../../assets/icons/play_icon.svg';
 import { ReactComponent as RewindIcon } from '../../assets/icons/rewind_icon.svg';
+import { ReactComponent as ArrowUp } from '../../assets/icons/arrow_up.svg';
 import { PersonEmoji } from '../../assets/images';
 import blockTypes from './CodeBlock/CodeBlock.module.scss';
 import CodeLine from './CodeLine/CodeLine';
@@ -144,6 +145,10 @@ const CodeWindow = () => {
   const [codeSpeed, setCodeSpeed] = useState<number>(CONFIG.CODE_ANIMATION_SPEED);
   const updatedCodeLines = codeLines.slice();
 
+  const [hasHovered, setHasHovered] = useState(false);
+  const [isSliderVisible, setIsSliderVisible] = useState(false);
+  setTimeout(() => !hasHovered && setIsSliderVisible(true), 5000)
+
   const onCodeLineClick = (key: string, isClicked: boolean) => {
     updatedCodeLines.find((x) => x.key === key)!.isClicked = isClicked;
     setCodeLines(updatedCodeLines);
@@ -156,7 +161,10 @@ const CodeWindow = () => {
 
   const [isMouseHovering, setIsMouseHovering] = useState<boolean>(false);
   const onMouseLeave = () => setIsMouseHovering(false);
-  const onMouseOver = () => setIsMouseHovering(true);
+  const onMouseOver = () => {
+    setHasHovered(true);
+    setIsMouseHovering(true);
+  }
 
   const [isFooterPinned, setIsFooterPinned] = useState<boolean>(false);
   const onPinClick = () => setIsFooterPinned((x) => !x);
@@ -191,6 +199,11 @@ const CodeWindow = () => {
     styles.name,
     { [styles.visible]: !isFooterVisible }
   );
+
+  const sliderClasses: string = classNames(
+    styles.slider,
+    { [styles.visible]: !hasHovered && isSliderVisible }
+  )
 
   // ---------------- //
   // component render //
@@ -354,6 +367,7 @@ const CodeWindow = () => {
   }, [codeLines, isCodePaused]);
 
   return (
+    <>
     <div
       className={styles.wrapper}
       onMouseOver={onMouseOver}
@@ -409,8 +423,12 @@ const CodeWindow = () => {
           <span>Lines: {formattedLineCount}</span>
           <span>Chars: {formattedCharCount}</span>
         </span>
+        </div>
       </div>
-    </div>
+      <div className={sliderClasses}>
+        <ArrowUp/> You can click me!
+      </div>
+    </>
   );
 };
 
