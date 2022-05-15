@@ -126,9 +126,10 @@ const getNextIndentSize = (codeLines: CodeLineModel[], codeScopeCount: number): 
   // determine if scope closing tags were created on the last code line
   // (closing tags cannot be used to increase indent or spawn children)
   const wasValueBlockUsed: boolean = codeLines[0] && Boolean(codeLines[0].findCodeBlockSize(blockTypes.value));
+  const wasCommentBlockUsed: boolean = codeLines[0] && Boolean(codeLines[0].findCodeBlockSize(blockTypes.commentBlock));
   const wasScopeDecreased: boolean = codeLines[1] && codeLines[1].findCodeBlockSize(blockTypes.indent) > lastIndentSize;
 
-  const canIncreaseIndent: boolean = lastIndentSize < CONFIG.INDENT_MAX_SIZE && !wasValueBlockUsed && !wasScopeDecreased;
+  const canIncreaseIndent: boolean = lastIndentSize < CONFIG.INDENT_MAX_SIZE && !wasValueBlockUsed && !wasCommentBlockUsed && !wasScopeDecreased;
   const canDecreaseIndent: boolean = lastIndentSize > 1;
   if (canIncreaseIndent) return lastIndentSize + 1;
   if (canDecreaseIndent) return lastIndentSize - 1;
@@ -189,7 +190,8 @@ const CodeWindow = () => {
 
   const nameClasses: string = classNames(
     styles.name,
-    { [styles.visible]: !isFooterVisible }
+    { [styles.minimized]: isFooterVisible },
+    // { [styles.visible]: !isFooterVisible }
   );
 
   // ---------------- //
@@ -273,65 +275,97 @@ const CodeWindow = () => {
             const useAttributeBlock: boolean = getRandomBool({ probability: 0.8 });
             const useStringBlock: boolean = useAttributeBlock && getRandomBool({ probability: 0.675 });
             const useValueBlock: boolean = !isScopeChangeImminent && getRandomBool({ probability: useStringBlock ? 0.25 : 0.5 });
+            const useCommentBlocks: boolean =  !isScopeChangeImminent && getRandomBool({ probability: 0.15 });
 
             // get the remaining code line space available to generate blocks on
             // [2] = reserved space for the pair of start and close angle blocks
             let remainingCodeLineSize: number = CONFIG.CODE_LINE_MAX_SIZE - indentCodeBlock.maximumSize - 2;
-            if (useStringBlock) remainingCodeLineSize -= 1; // [1] used by operator block before string
-            if (useValueBlock) remainingCodeLineSize -= 2; // [2] used by second start and close angles
 
-            // get the remaining number of block size calculations to execute
-            // [1] = reserved space for tag name (used twice on value blocks)
-            let remainingCalculations: number = 1 + +useAttributeBlock + +useStringBlock + +useValueBlock * 2;
+            if (useCommentBlocks) {
+              nextCodeLine.codeBlocks.push(new CodeBlockModel({ blockType: blockTypes.commentOpenAngle }));
+              nextCodeLine.codeBlocks.push(new CodeBlockModel({ blockType: blockTypes.commentOperator }));
+              nextCodeLine.codeBlocks.push(new CodeBlockModel({ blockType: blockTypes.commentOperator }));
+              remainingCodeLineSize -= 4;
 
-            // get the next size a generated code block can consume on the code line
-            const getBlockSize = (codeBlockMaxSize = CONFIG.CODE_BLOCK_MAX_SIZE) => {
-              const averageSize: number = Math.floor(remainingCodeLineSize / remainingCalculations);
-              const maximumSize: number = Math.min(averageSize, codeBlockMaxSize);
-              let minimumSize = Math.min(1 + getRandomBit({ probability: .25 }), averageSize);
-
-              // lower the number of single-sizes because it gets excessive
-              // single, single, single ... all this line space was wasted!
-
-              if (minimumSize === 1) {
-                const nextBlockTypes = new Set(nextCodeLine.codeBlocks.map((x: CodeBlockModel) => x.blockType));
-
-                // reduce the likelihood of generating code lines that are a single block of single size
-                // [<= 3] includes open and close angle block types that are implicitly added to the tag
-                const nextLineIsOneTag: boolean = nextBlockTypes.size <= 3 && remainingCalculations <= 1;
-                if (nextLineIsOneTag) minimumSize += getRandomBit({ probability: 0.8 });
-
-                // restrict code lines to one single-size block because too many looks bad
-                const nextLineHasSingleSize: boolean = nextCodeLine.hasCodeBlockSize(1);
-                if (nextLineHasSingleSize) minimumSize = Math.min(2, averageSize);
+              const getCommentSize = (codeBlockMaxSize = CONFIG.CODE_BLOCK_MAX_SIZE) => {
+                const maximumSize: number = Math.min(codeBlockMaxSize, remainingCodeLineSize);
+                const minimumSize: number = getHasSingleSize() ? 2 : 1;
+                const result: number = getRandomNumber({ min: minimumSize, max: maximumSize });
+                remainingCodeLineSize -= result;
+                return result;
               }
 
-              const result: number = getRandomNumber({ min: minimumSize, max: maximumSize });
-              remainingCodeLineSize -= result;
-              remainingCalculations -= 1;
-              return result;
-            };
+              const getHasSingleSize = () => {
+                const commentBlocks = nextCodeLine.codeBlocks.filter(x => x.blockType === blockTypes.commentBlock);
+                return commentBlocks.length === 1 && commentBlocks[0].maximumSize === 1;
+              }
 
-            const nextTagNameSize: number = getBlockSize(3);
+              do
+                nextCodeLine.codeBlocks.push(new CodeBlockModel({ blockType: blockTypes.commentBlock, blockSize: getCommentSize() }));
+              while (remainingCodeLineSize > 0 && (getHasSingleSize() || getRandomBool({ probability: 0.5 })));
 
-            if (useValueBlock) {
-              // remove trailing tag name after value blocks
-              // <[tag_name] [attribute]>[value]<[tag_name]>
-              remainingCodeLineSize -= nextTagNameSize;
-              remainingCalculations -= 1;
+              nextCodeLine.codeBlocks.push(new CodeBlockModel({ blockType: blockTypes.commentOperator }));
+              nextCodeLine.codeBlocks.push(new CodeBlockModel({ blockType: blockTypes.commentOperator }));
+              nextCodeLine.codeBlocks.push(new CodeBlockModel({ blockType: blockTypes.commentCloseAngle }));
             }
 
-            // push items individually so getBlockSize() can observe array contents during insert
-            nextCodeLine.codeBlocks.push(new CodeBlockModel({ blockType: blockTypes.openAngle }));
-            nextCodeLine.codeBlocks.push(new CodeBlockModel({ blockType: blockTypes.tagName, blockSize: nextTagNameSize }));
-            useAttributeBlock && nextCodeLine.codeBlocks.push(new CodeBlockModel({ blockType: blockTypes.attribute, blockSize: getBlockSize() }));
-            useStringBlock && nextCodeLine.codeBlocks.push(new CodeBlockModel({ blockType: blockTypes.operator }));
-            useStringBlock && nextCodeLine.codeBlocks.push(new CodeBlockModel({ blockType: blockTypes.string, blockSize: getBlockSize() }));
-            nextCodeLine.codeBlocks.push(new CodeBlockModel({ blockType: blockTypes.closeAngle }));
-            useValueBlock && nextCodeLine.codeBlocks.push(new CodeBlockModel({ blockType: blockTypes.value, blockSize: getBlockSize() }));
-            useValueBlock && nextCodeLine.codeBlocks.push(new CodeBlockModel({ blockType: blockTypes.openAngle }));
-            useValueBlock && nextCodeLine.codeBlocks.push(new CodeBlockModel({ blockType: blockTypes.tagName, blockSize: nextTagNameSize }));
-            useValueBlock && nextCodeLine.codeBlocks.push(new CodeBlockModel({ blockType: blockTypes.closeAngle }));
+            else {
+              if (useStringBlock) remainingCodeLineSize -= 1; // [1] used by operator block before string
+              if (useValueBlock) remainingCodeLineSize -= 2; // [2] used by second start and close angles
+
+              // get the remaining number of block size calculations to execute
+              // [1] = reserved space for tag name (used twice on value blocks)
+              let remainingCalculations: number = 1 + +useAttributeBlock + +useStringBlock + +useValueBlock * 2;
+
+              // get the next size a generated code block can consume on the code line
+              const getBlockSize = (codeBlockMaxSize = CONFIG.CODE_BLOCK_MAX_SIZE) => {
+                const averageSize: number = Math.floor(remainingCodeLineSize / remainingCalculations);
+                const maximumSize: number = Math.min(averageSize, codeBlockMaxSize);
+                let minimumSize = Math.min(1 + getRandomBit({ probability: .25 }), averageSize);
+
+                // lower the number of single-sizes because it gets excessive
+                // single, single, single ... all this line space was wasted!
+
+                if (minimumSize === 1) {
+                  const nextBlockTypes = new Set(nextCodeLine.codeBlocks.map((x: CodeBlockModel) => x.blockType));
+
+                  // reduce the likelihood of generating code lines that are a single block of single size
+                  // [<= 3] includes open and close angle block types that are implicitly added to the tag
+                  const nextLineIsOneTag: boolean = nextBlockTypes.size <= 3 && remainingCalculations <= 1;
+                  if (nextLineIsOneTag) minimumSize += getRandomBit({ probability: 0.8 });
+
+                  // restrict code lines to one single-size block because too many looks bad
+                  const nextLineHasSingleSize: boolean = nextCodeLine.hasCodeBlockSize(1);
+                  if (nextLineHasSingleSize) minimumSize = Math.min(2, averageSize);
+                }
+
+                const result: number = getRandomNumber({ min: minimumSize, max: maximumSize });
+                remainingCodeLineSize -= result;
+                remainingCalculations -= 1;
+                return result;
+              };
+
+              const nextTagNameSize: number = getBlockSize(3);
+
+              if (useValueBlock) {
+                // remove trailing tag name after value blocks
+                // <[tag_name] [attribute]>[value]<[tag_name]>
+                remainingCodeLineSize -= nextTagNameSize;
+                remainingCalculations -= 1;
+              }
+
+              // push items individually so getBlockSize() can observe array contents during insert
+              nextCodeLine.codeBlocks.push(new CodeBlockModel({ blockType: blockTypes.openAngle }));
+              nextCodeLine.codeBlocks.push(new CodeBlockModel({ blockType: blockTypes.tagName, blockSize: nextTagNameSize }));
+              useAttributeBlock && nextCodeLine.codeBlocks.push(new CodeBlockModel({ blockType: blockTypes.attribute, blockSize: getBlockSize() }));
+              useStringBlock && nextCodeLine.codeBlocks.push(new CodeBlockModel({ blockType: blockTypes.operator }));
+              useStringBlock && nextCodeLine.codeBlocks.push(new CodeBlockModel({ blockType: blockTypes.string, blockSize: getBlockSize() }));
+              nextCodeLine.codeBlocks.push(new CodeBlockModel({ blockType: blockTypes.closeAngle }));
+              useValueBlock && nextCodeLine.codeBlocks.push(new CodeBlockModel({ blockType: blockTypes.value, blockSize: getBlockSize() }));
+              useValueBlock && nextCodeLine.codeBlocks.push(new CodeBlockModel({ blockType: blockTypes.openAngle }));
+              useValueBlock && nextCodeLine.codeBlocks.push(new CodeBlockModel({ blockType: blockTypes.tagName, blockSize: nextTagNameSize }));
+              useValueBlock && nextCodeLine.codeBlocks.push(new CodeBlockModel({ blockType: blockTypes.closeAngle }));
+            }
           }
 
           break;
@@ -381,7 +415,7 @@ const CodeWindow = () => {
         </div>
         <div className={nameClasses}>
           <img src={PersonEmoji} alt="person emoji" />
-          <span>Austin Williams</span>
+          <span>{isFooterVisible ? "Made with React" : "Austin Williams"}</span>
         </div>
       </div>
       <div className={footerClasses}>
